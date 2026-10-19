@@ -51,5 +51,5 @@ ENV FLASK_APP=run.py
 # -w 4: Use 4 worker processes (adjust based on server resources)
 # -b 0.0.0.0:5000: Bind to all network interfaces on port 5000
 # app:app : Look for the Flask app instance named 'app' in the 'app.py' module
-CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:5000", "app:run"]
+CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:5000", "run:app"]
 
