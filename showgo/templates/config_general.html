@@ -1,0 +1,313 @@
+{% extends "config_base.html" %}
+
+{% block page_title %}Общие настройки{% endblock %}
+{% block content_title %}Общие настройки{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto"> {# Constrain width for readability #}
+    {# Main form for general settings #}
+    <form action="{{ url_for('config_bp.config_general') }}" method="POST" id="general-settings-form">
+
+        {# Slideshow Settings Section #}
+        <div class="config-section">
+            <h2>Настройки слайд-шоу</h2>
+            <h3 class="text-base font-medium text-gray-400 mb-3 mt-2 border-b border-gray-700 pb-1">Отображение изображений</h3>
+            <div class="grid-cols-form mb-4">
+                <div class="form-group">
+                    <label for="duration_seconds">Длительность изображения (секунды)</label>
+                    {# *** CORRECTED: Use 'settings' dictionary *** #}
+                    <input type="number" id="duration_seconds" name="duration_seconds" min="1" value="{{ settings.slideshow.duration_seconds }}" required class="form-input">
+                </div>
+                <div class="form-group">
+                    <label for="transition_effect">Эффект перехода изображений</label>
+                    <select id="transition_effect" name="transition_effect" class="form-select">
+                        {# *** CORRECTED: Use 'settings' dictionary *** #}
+                        <option value="fade" {% if settings.slideshow.transition_effect == 'fade' %}selected{% endif %}>Затухание</option>
+                        <option value="slide" {% if settings.slideshow.transition_effect == 'slide' %}selected{% endif %}>Скольжение (базовое)</option>
+                        <option value="kenburns" {% if settings.slideshow.transition_effect == 'kenburns' %}selected{% endif %}>Кен Бернс (масштаб/панорама)</option>
+                    </select>
+                </div>
+                 <div class="form-group">
+                    <label for="image_scaling">Масштабирование изображений</label>
+                    <select id="image_scaling" name="image_scaling" class="form-select">
+                        {# *** CORRECTED: Use 'settings' dictionary *** #}
+                        <option value="cover" {% if settings.slideshow.image_scaling == 'cover' %}selected{% endif %}>Заполнить (заполнить экран)</option>
+                        <option value="contain" {% if settings.slideshow.image_scaling == 'contain' %}selected{% endif %}>Вписать (подогнать под экран)</option>
+                    </select>
+                </div>
+                <div></div> {# Placeholder for grid spacing if needed #}
+            </div>
+
+            <h3 class="text-base font-medium text-gray-400 mb-3 mt-4 border-b border-gray-700 pb-1">Воспроизведение видео</h3>
+             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div class="form-group">
+                    <label for="video_scaling">Масштабирование видео</label>
+                    <select id="video_scaling" name="video_scaling" class="form-select">
+                        {# *** CORRECTED: Use 'settings' dictionary *** #}
+                        <option value="contain" {% if settings.slideshow.video_scaling == 'contain' %}selected{% endif %}>Вписать (подогнать под экран, по умолчанию)</option>
+                        <option value="cover" {% if settings.slideshow.video_scaling == 'cover' %}selected{% endif %}>Заполнить (заполнить экран)</option>
+                    </select>
+                </div>
+                <div class="form-group md:col-span-2 grid grid-cols-2 sm:grid-cols-4 gap-4 pt-2">
+                     <label class="inline-flex items-center">
+                        {# *** CORRECTED: Use 'settings' dictionary *** #}
+                        <input type="checkbox" id="video_autoplay" name="video_autoplay" class="form-checkbox" {% if settings.slideshow.video_autoplay %}checked{% endif %}>
+                        <span class="checkbox-label">Автовоспроизведение</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                        {# *** CORRECTED: Use 'settings' dictionary *** #}
+                        <input type="checkbox" id="video_loop" name="video_loop" class="form-checkbox" {% if settings.slideshow.video_loop %}checked{% endif %}>
+                        <span class="checkbox-label">Повтор</span>
+                    </label>
+                     <label class="inline-flex items-center">
+                        {# *** CORRECTED: Use 'settings' dictionary *** #}
+                        <input type="checkbox" id="video_muted" name="video_muted" class="form-checkbox" {% if settings.slideshow.video_muted %}checked{% endif %}>
+                        <span class="checkbox-label">Без звука</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                        {# *** CORRECTED: Use 'settings' dictionary *** #}
+                        <input type="checkbox" id="video_show_controls" name="video_show_controls" class="form-checkbox" {% if settings.slideshow.video_show_controls %}checked{% endif %}>
+                        <span class="checkbox-label">Показать элементы управления</span>
+                    </label>
+                </div>
+            </div>
+
+            {# Video Playback Advanced Settings - Moved into main form #}
+            <div class="form-group mt-4">
+                <label class="flex items-center">
+                    <input type="checkbox" name="video_duration_limit_enabled" 
+                           {% if video_duration_limit_enabled %}checked{% endif %}
+                           class="form-checkbox rounded border-gray-600 bg-gray-700 
+                                  text-indigo-600 shadow-sm focus:border-indigo-500 
+                                  focus:ring-indigo-500">
+                    <span class="ml-2 text-sm text-gray-300">
+                        Ограничить длительность воспроизведения видео
+                    </span>
+                </label>
+                <div class="mt-2 ml-6"
+                     id="duration-limit-controls">
+                    <input type="number" id="video_duration_limit" 
+                           name="video_duration_limit_seconds"
+                           value="{{ video_duration_limit_seconds or 30 }}"
+                           min="1" max="3600" step="1"
+                           class="form-input w-24 rounded-md border-gray-600 
+                                  bg-gray-700 text-gray-300 shadow-sm 
+                                  focus:border-indigo-500 focus:ring-indigo-500">
+                    <span class="text-sm text-gray-300">секунд</span>
+                </div>
+                <p class="mt-1 text-sm text-gray-500">
+                    Видео перестанет воспроизводиться после этой длительности
+                </p>
+            </div>
+
+            <div id="random-start-options"{% if not video_duration_limit_enabled %} class="hidden"{% endif %}>
+                <div class="form-group">
+                    <label class="flex items-center">
+                        <input type="checkbox" name="video_random_start_enabled"
+                               {% if video_random_start_enabled %}checked{% endif %}
+                               class="form-checkbox rounded border-gray-600 bg-gray-700 
+                                      text-indigo-600 shadow-sm focus:border-indigo-500 
+                                      focus:ring-indigo-500">
+                        <span class="ml-2 text-sm text-gray-300">
+                            Случайное время начала видео
+                        </span>
+                    </label>
+                    <p class="mt-1 text-sm text-gray-500 ml-6">
+                        Начинать видео в случайный момент, обеспечивая полное воспроизведение заданной длительности
+                    </p>
+                </div>
+            </div>
+
+             <h3 class="text-base font-medium text-gray-400 mb-3 mt-4 border-b border-gray-700 pb-1">Общий порядок</h3>
+             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                 <div class="form-group">
+                    <label for="image_order">Порядок отображения медиа</label>
+                    <select id="image_order" name="image_order" class="form-select">
+                        {# *** CORRECTED: Use 'settings' dictionary *** #}
+                        <option value="sequential" {% if settings.slideshow.image_order == 'sequential' %}selected{% endif %}>Последовательный (порядок загрузки)</option>
+                        <option value="random" {% if settings.slideshow.image_order == 'random' %}selected{% endif %}>Случайный</option>
+                    </select>
+                    <p class="mt-1 text-xs text-gray-500">Применяется к изображениям и видео.</p>
+                </div>
+             </div>
+        </div>
+
+        {# Overlay Branding Section #}
+        <div class="config-section">
+            <h2>Наложение брендинга</h2>
+            <div class="form-group border-b border-gray-700 pb-4 mb-4">
+                <label class="inline-flex items-center">
+                   {# *** CORRECTED: Use 'settings' dictionary *** #}
+                   <input type="checkbox" id="overlay_enabled" name="overlay_enabled" class="form-checkbox" {% if settings.overlay.enabled %}checked{% endif %}>
+                   <span class="checkbox-label font-medium">Включить наложение брендинга</span>
+               </label>
+            </div>
+
+            {# *** CORRECTED: Use 'settings' dictionary *** #}
+            <div id="overlay-options" class="{% if not settings.overlay.enabled %}hidden{% endif %}">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 mb-6">
+                    <div class="form-group">
+                        <label for="overlay_text">Текст наложения</label>
+                        {# *** CORRECTED: Use 'settings' dictionary *** #}
+                        <input type="text" id="overlay_text" name="overlay_text" value="{{ settings.overlay.text }}" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label for="overlay_position">Позиция</label>
+                        <select id="overlay_position" name="overlay_position" class="form-select">
+                            {# *** CORRECTED: Use 'settings' dictionary *** #}
+                            <option value="top-left" {% if settings.overlay.position == 'top-left' %}selected{% endif %}>Сверху слева</option>
+                            <option value="top-center" {% if settings.overlay.position == 'top-center' %}selected{% endif %}>Сверху по центру</option>
+                            <option value="top-right" {% if settings.overlay.position == 'top-right' %}selected{% endif %}>Сверху справа</option>
+                            <option value="middle-left" {% if settings.overlay.position == 'middle-left' %}selected{% endif %}>Посередине слева</option>
+                            <option value="center" {% if settings.overlay.position == 'center' %}selected{% endif %}>По центру</option>
+                            <option value="middle-right" {% if settings.overlay.position == 'middle-right' %}selected{% endif %}>Посередине справа</option>
+                            <option value="bottom-left" {% if settings.overlay.position == 'bottom-left' %}selected{% endif %}>Снизу слева</option>
+                            <option value="bottom-center" {% if settings.overlay.position == 'bottom-center' %}selected{% endif %}>Снизу по центру</option>
+                            <option value="bottom-right" {% if settings.overlay.position == 'bottom-right' %}selected{% endif %}>Снизу справа</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="overlay_font_size">Размер шрифта</label>
+                        {# *** CORRECTED: Use 'settings' dictionary *** #}
+                        <input type="text" id="overlay_font_size" name="overlay_font_size" value="{{ settings.overlay.font_size }}" class="form-input" placeholder="например, 24px или 1.5em">
+                    </div>
+                    <div class="form-group">
+                        <label for="overlay_font_color">Цвет шрифта</label>
+                        {# *** CORRECTED: Use 'settings' dictionary *** #}
+                        <input type="color" id="overlay_font_color" name="overlay_font_color" value="{{ settings.overlay.font_color }}" class="form-input h-10 p-1">
+                    </div>
+                     <div class="form-group">
+                        <label for="overlay_background_color">Цвет фона (блока)</label>
+                        {# *** CORRECTED: Use 'settings' dictionary *** #}
+                        <input type="text" id="overlay_background_color" name="overlay_background_color" value="{{ settings.overlay.background_color }}" class="form-input" placeholder="например, rgba(0,0,0,0.5) или #333">
+                    </div>
+                    <div class="form-group">
+                        <label for="overlay_padding">Отступы (блока)</label>
+                        {# *** CORRECTED: Use 'settings' dictionary *** #}
+                        <input type="text" id="overlay_padding" name="overlay_padding" value="{{ settings.overlay.padding }}" class="form-input" placeholder="например, 10px или 0.5em 1em">
+                    </div>
+                </div>
+
+                <div class="form-group border-t border-gray-700 pt-4 mt-4">
+                     <label class="inline-flex items-center mb-3">
+                        {# *** CORRECTED: Use 'settings' dictionary *** #}
+                        <input type="checkbox" id="overlay_logo_enabled" name="overlay_logo_enabled" class="form-checkbox" {% if settings.overlay.logo_enabled %}checked{% endif %}>
+                        <span class="checkbox-label font-medium">Отображать логотип</span>
+                    </label>
+                </div>
+
+                <div class="form-group">
+                    <label for="overlay_display_mode">Режим отображения</label>
+                    <select id="overlay_display_mode" name="overlay_display_mode" class="form-select">
+                        {# *** CORRECTED: Use 'settings' dictionary *** #}
+                        <option value="text_only" {% if settings.overlay.display_mode == 'text_only' %}selected{% endif %}>Только текст</option>
+                        <option value="logo_only" {% if settings.overlay.display_mode == 'logo_only' %}selected{% endif %}>Только логотип</option>
+                        <option value="logo_and_text_side" {% if settings.overlay.display_mode == 'logo_and_text_side' %}selected{% endif %}>Логотип и текст (рядом)</option>
+                        <option value="logo_and_text_below" {% if settings.overlay.display_mode == 'logo_and_text_below' %}selected{% endif %}>Логотип и текст (логотип сверху)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+
+        {# Widgets Section #}
+        <div class="config-section">
+            <h2>Виджеты</h2>
+             <div class="grid grid-cols-1 gap-y-6">
+                <div class="form-group">
+                     <label class="inline-flex items-center">
+                        {# *** CORRECTED: Use 'settings' dictionary *** #}
+                        <input type="checkbox" id="time_widget_enabled" name="time_widget_enabled" class="form-checkbox" {% if settings.widgets.time.enabled %}checked{% endif %}>
+                        <span class="checkbox-label font-medium">Включить виджет времени</span>
+                    </label>
+                </div>
+             </div>
+        </div>
+
+        {# Display Options Section - Burn-in Prevention #}
+        <div class="config-section">
+            <h2>Параметры отображения</h2>
+             <div class="grid grid-cols-1 gap-y-6">
+                <div class="form-group">
+                    <label class="inline-flex items-center mb-3">
+                        {# *** CORRECTED: Use 'settings' dictionary *** #}
+                        <input type="checkbox" id="burn_in_prevention_enabled" name="burn_in_prevention_enabled" class="form-checkbox" {% if settings.burn_in_prevention.enabled %}checked{% endif %}>
+                        <span class="checkbox-label font-medium">Включить защиту от выгорания (сдвиг пикселей)</span>
+                    </label>
+                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pl-6">
+                         <div class="form-group mb-0">
+                            <label>Элементы для сдвига</label>
+                            <div class="mt-2 space-y-1">
+                                {# *** CORRECTED: Use 'settings' dictionary *** #}
+                                {% set bip_elements = settings.burn_in_prevention.elements or [] %}
+                                <label class="flex items-center"> <input type="checkbox" id="bip_overlay" name="burn_in_elements" value="overlay" class="form-checkbox" {% if 'overlay' in bip_elements %}checked{% endif %}><span class="checkbox-label">Наложение брендинга</span> </label>
+                                <label class="flex items-center"> <input type="checkbox" id="bip_time" name="burn_in_elements" value="time" class="form-checkbox" {% if 'time' in bip_elements %}checked{% endif %}><span class="checkbox-label">Время</span> </label>
+                            </div>
+                        </div>
+                        <div class="form-group mb-0">
+                            <label for="burn_in_interval_seconds">Интервал сдвига (секунды)</label>
+                            {# *** CORRECTED: Use 'settings' dictionary *** #}
+                            <input type="number" id="burn_in_interval_seconds" name="burn_in_interval_seconds" min="1" value="{{ settings.burn_in_prevention.interval_seconds }}" required class="form-input">
+                        </div>
+                         <div class="form-group mb-0">
+                            <label for="burn_in_strength_pixels">Сила сдвига (пиксели)</label>
+                            {# *** CORRECTED: Use 'settings' dictionary *** #}
+                            <input type="number" id="burn_in_strength_pixels" name="burn_in_strength_pixels" min="1" max="10" value="{{ settings.burn_in_prevention.strength_pixels }}" required class="form-input">
+                        </div>
+                    </div>
+                </div>
+             </div>
+        </div>
+
+        <div class="mt-6 text-right">
+            <button type="submit" class="btn btn-primary">Сохранить общие настройки</button>
+        </div>
+    </form>
+
+    {# Separate form for logo upload #}
+    <div class="config-section mt-6">
+        <h3>Загрузка логотипа для наложения</h3>
+        <p class="text-sm text-gray-400 mb-3">Загрузите PNG-изображение для использования в качестве логотипа наложения. Оно заменит существующий логотип.</p>
+        {% if logo_exists %}
+        <div class="mb-4">
+            <p class="text-sm text-gray-300 mb-1">Текущий логотип:</p>
+            <img src="{{ url_for('static', filename='assets/' + APP_CONFIG_OVERLAY_LOGO_FILENAME) }}?v={{ range(1, 100000) | random }}" alt="Текущий логотип наложения" class="max-h-20 border border-gray-600 rounded bg-gray-700 p-1">
+             <p class="text-xs text-gray-500 mt-1">Если изображение не обновилось после загрузки, попробуйте жесткую перезагрузку (Ctrl+Shift+R).</p>
+        </div>
+        {% else %}
+        <p class="text-sm text-gray-400 mb-3">Логотип еще не загружен.</p>
+        {% endif %}
+        <form action="{{ url_for('config_bp.upload_overlay_logo') }}" method="POST" enctype="multipart/form-data" id="logo-upload-form">
+            <div class="form-group">
+                <label for="overlay_logo_file">Выберите PNG-файл:</label>
+                <input type="file" id="overlay_logo_file" name="overlay_logo_file" accept=".png" required class="form-input">
+            </div>
+            <div class="mt-4">
+                <button type="submit" class="btn btn-secondary">Загрузить логотип</button>
+            </div>
+        </form>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block page_js %}
+<script src="{{ url_for('static', filename='js/media_management.js') }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const overlayEnabledCheckbox = document.getElementById('overlay_enabled');
+    const overlayOptionsDiv = document.getElementById('overlay-options');
+
+    function toggleOverlayOptions() {
+        if (overlayEnabledCheckbox && overlayOptionsDiv) {
+            overlayOptionsDiv.classList.toggle('hidden', !overlayEnabledCheckbox.checked);
+        }
+    }
+
+    if (overlayEnabledCheckbox) {
+        overlayEnabledCheckbox.addEventListener('change', toggleOverlayOptions);
+        toggleOverlayOptions(); // Initial state
+    }
+});
+</script>
+{% endblock %}

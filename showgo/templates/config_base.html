@@ -1,0 +1,68 @@
+{# *** REMOVED: Erroneous self-extension {% extends "config_base.html" %} *** #}
+<!DOCTYPE html>
+<html lang="ru" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {# Use block title for specific page titles #}
+    <title>ShowGo Настройки - {% block page_title %}Базовый{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { darkMode: 'class', theme: { extend: {} } }
+    </script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/config_styles.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    {# Add FontAwesome for icons if desired later #}
+    {# <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"> #}
+</head>
+<body class="bg-gray-900 text-gray-100">
+
+    <div class="flex h-screen">
+        <aside class="w-64 bg-gray-800 text-gray-300 flex flex-col shadow-lg flex-shrink-0"> {# Added flex-shrink-0 #}
+            <div class="p-4 border-b border-gray-700">
+                <h1 class="text-2xl font-bold text-indigo-400 text-center">ShowGo</h1>
+            </div>
+            <nav class="flex-grow p-4 space-y-2">
+                {# Use active_page variable passed from route to highlight #}
+                <a href="{{ url_for('config_bp.config_general') }}"
+                   class="flex items-center px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700 hover:text-white {{ 'bg-gray-700 text-white' if active_page == 'general' else 'text-gray-400' }}">
+                   Общие настройки
+                </a>
+                <a href="{{ url_for('config_bp.config_media') }}"
+                   class="flex items-center px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700 hover:text-white {{ 'bg-gray-700 text-white' if active_page == 'media' else 'text-gray-400' }}">
+                   Управление медиа
+                </a>
+                 <a href="{{ url_for('main_bp.slideshow_viewer') }}" target="_blank"
+                   class="flex items-center px-3 py-2 rounded-md text-sm font-medium text-gray-400 hover:bg-gray-700 hover:text-white">
+                   Просмотр слайд-шоу
+                 </a>
+            </nav>
+        </aside>
+
+        <main class="flex-1 flex flex-col overflow-hidden">
+            <header class="bg-gray-800 shadow-md p-4 border-b border-gray-700">
+                 <h2 class="text-xl font-semibold text-gray-200">{% block content_title %}Конфигурация{% endblock %}</h2>
+            </header>
+            <div class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-900 p-6 md:p-8">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        <div class="mb-4 max-w-4xl mx-auto">
+                        {% for category, message in messages %}
+                            <div class="flash-message flash-{{ category }}">{{ message }}</div>
+                        {% endfor %}
+                        </div>
+                    {% endif %}
+                {% endwith %}
+
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+
+     {# Allow specific pages to add their own JS via a block #}
+     {% block page_js %}{% endblock %}
+
+</body>
+</html>

@@ -1,0 +1,34 @@
+# .dockerignore
+
+# Ignore virtual environment
+venv/
+__pycache__/
+
+# Ignore Git files
+.git/
+.gitignore
+.dockerignore
+
+# Ignore IDE/Editor files
+.vscode/
+.idea/
+
+# Don't copy potentially large user uploads/thumbnails into the *image*
+# These should be handled by volumes during runtime.
+uploads/
+thumbnails/
+instance/
+showgo/static/assets/overlay_logo.png
+
+# Other temporary/build files
+*.pyc
+*.pyo
+*.pyd
+*.log
+
+# OS-generated files
+.DS_Store
+Thumbs.db
+
+# Python .env
+.env

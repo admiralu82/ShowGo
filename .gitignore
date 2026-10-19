@@ -1,0 +1,27 @@
+# Virtual Environment
+venv/
+__pycache__/
+
+# Uploaded Media & Thumbnails
+uploads/
+thumbnails/
+showgo/static/assets/overlay_logo.png
+
+# Configuration
+instance/showgo.db
+
+# Compiled Python files
+*.pyc
+*.pyo
+*.pyd
+
+# OS-generated files
+.DS_Store
+Thumbs.db
+
+# IDE/Editor files
+.vscode/
+.idea/
+
+# Python .env
+.env

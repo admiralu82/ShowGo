@@ -1,0 +1,211 @@
+v{# RENAMED from config_images.html #}
+{% extends "config_base.html" %}
+
+{% block page_title %}Управление медиа{% endblock %}
+{% block content_title %}Управление медиа{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto"> {# Wider container for media grid #}
+
+    {# --- Validation Section --- #}
+    {% if missing_db_entries %}
+    <div class="config-section border-yellow-500 border-2">
+        <h3 class="text-lg font-medium text-yellow-400 mb-2">Предупреждение: Отсутствующие медиафайлы</h3>
+        <p class="text-gray-300 mb-4 text-sm">Следующие записи базы данных указывают на медиафайлы, отсутствующие в
+            файловой системе. Они не появятся в слайд-шоу или сетке ниже. Вам следует восстановить отсутствующие файлы
+            или удалить записи базы данных.</p>
+        <form id="cleanup-missing-db-form" action="{{ url_for('config_bp.cleanup_missing_media_db_route') }}"
+            method="POST">
+            <ul class="list-disc list-inside mb-4 text-sm space-y-1">
+                {% for media in missing_db_entries %}
+                <li class="text-gray-300">
+                    <input type="hidden" name="missing_media_ids" value="{{ media.id }}">
+                    <strong>{{ media.display_name }}</strong> (Тип: {{ media.media_type | capitalize }}, ID: {{ media.id
+                    }}, Оригинал: {{ media.original_filename }}) - Отсутствует: {{ ', '.join(media.missing_info) }}
+                </li>
+                {% endfor %}
+            </ul>
+            <button type="submit" class="btn btn-warning btn-sm">Удалить {{ missing_db_entries|length }} отсутствующих
+                записей базы данных</button>
+        </form>
+    </div>
+    {% endif %}
+    {% set total_unexpected = (orphaned_uuid_files|length) + (unexpected_files|length) + (unexpected_dirs|length) %}
+    {% if total_unexpected > 0 %}
+    <div class="config-section border-red-500 border-2">
+        <h3 class="text-lg font-medium text-red-400 mb-2">Предупреждение: Найдены неожиданные элементы</h3>
+        <p class="text-gray-300 mb-4 text-sm">Следующие элементы существуют в папках загрузок или миниатюр, но не
+            соответствуют записям базы данных или ожидаемым форматам. Нажатие кнопки ниже приведет к безвозвратному
+            удалению этих элементов.</p>
+        <form id="cleanup-unexpected-items-form" action="{{ url_for('config_bp.cleanup_unexpected_items_route') }}"
+            method="POST">
+            {% if orphaned_uuid_files %} <h4 class="font-semibold text-gray-200 mb-1 mt-3 text-sm">Осиротевшие файлы
+                UUID:</h4>
+            <p class="text-xs text-gray-400 mb-2">(Файлы, названные как медиа, но отсутствующие в базе данных)</p>
+            <ul class="list-disc list-inside mb-3 text-sm text-gray-400"> {% for item in orphaned_uuid_files %}<li>{{
+                    item.folder }}/{{ item.name }}</li>{% endfor %} </ul> {% endif %}
+            {% if unexpected_files %} <h4 class="font-semibold text-gray-200 mb-1 mt-3 text-sm">Другие неожиданные
+                файлы:</h4>
+            <p class="text-xs text-gray-400 mb-2">(Файлы, не соответствующие ожидаемым именам или форматам)</p>
+            <ul class="list-disc list-inside mb-3 text-sm text-gray-400"> {% for item in unexpected_files %}<li>{{
+                    item.folder }}/{{ item.name }}</li>{% endfor %} </ul> {% endif %}
+            {% if unexpected_dirs %} <h4 class="font-semibold text-gray-200 mb-1 mt-3 text-sm">Неожиданные каталоги:
+            </h4>
+            <p class="text-xs text-red-400 mb-2 font-semibold">(Найдены подпапки - ОНИ БУДУТ УДАЛЕНЫ)</p>
+            <ul class="list-disc list-inside mb-3 text-sm text-gray-400"> {% for item in unexpected_dirs %}<li>{{
+                    item.folder }}/{{ item.name }}/</li>{% endfor %} </ul> {% endif %}
+            {% set items_to_delete_count = (orphaned_uuid_files|length) + (unexpected_files|length) +
+            (unexpected_dirs|length) %}
+            {% if items_to_delete_count > 0 %} <button type="submit" class="btn btn-danger btn-sm mt-2">Удалить {{
+                items_to_delete_count }} неожиданных элемента(ов)</button> {% endif %}
+        </form>
+    </div>
+    {% endif %}
+
+    {# --- Upload and Management Section --- #}
+    <div class="config-section">
+        <h3 class="text-lg font-medium text-gray-300 mb-3">Настройки обработки изображений</h3>
+        <form action="{{ url_for('config_bp.update_image_settings') }}" method="POST" class="mb-6">
+            <div class="space-y-4">
+                <div class="form-group">
+                    <label for="max_resolution" class="block text-sm font-medium text-gray-300">
+                        Максимальное разрешение изображения
+                    </label>
+                    <select id="max_resolution" name="max_resolution" class="form-select mt-1 block w-full rounded-md border-gray-600 
+                                   bg-gray-700 text-gray-300 shadow-sm focus:border-indigo-500 
+                                   focus:ring-indigo-500">
+                        {% for res in config.MAX_IMAGE_RESOLUTIONS.keys() %}
+                        <option value="{{ res }}" {% if res==config.max_resolution %}selected{% endif %}>
+                            {{ res }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <p class="mt-1 text-sm text-gray-500">
+                        Изображения больше этого размера будут автоматически масштабироваться (кроме анимированных GIF)
+                    </p>
+                </div>
+            </div>
+            <div class="mt-4">
+                <button type="submit" class="btn btn-primary">Сохранить настройки изображений</button>
+            </div>
+        </form>
+
+        <form id="upload-media-form" action="{{ url_for('config_bp.upload_media') }}" method="POST"
+            enctype="multipart/form-data" class="mb-6 border-b border-gray-700 pb-6">
+            <h3 class="text-lg font-medium text-gray-300 mb-3">Загрузить новое медиа</h3>
+            <div class="form-group">
+                <label for="media_files" class="block text-sm font-medium text-gray-300">
+                    Выберите файлы изображений или видео:
+                </label>
+                <input type="file" id="media_files" name="media_files" multiple
+                    accept="{% for ext in config.ALLOWED_EXTENSIONS %}.{{ ext }}{% if not loop.last %},{% endif %}{% endfor %}"
+                    required class="mt-1 block w-full text-sm text-gray-300
+                              file:mr-4 file:py-2 file:px-4
+                              file:rounded-md file:border-0
+                              file:text-sm file:font-medium
+                              file:bg-indigo-600 file:text-white
+                              hover:file:bg-indigo-700
+                              file:cursor-pointer">
+                <p class="mt-1 text-xs text-gray-500">
+                    Максимальный общий размер загрузки: {{ config.MAX_CONTENT_LENGTH // 1024 // 1024 }} МБ.
+                    Разрешенные типы:
+                    {% for ext in config.ALLOWED_EXTENSIONS|sort %}
+                    {{ ext|upper }}{% if not loop.last %}, {% endif %}
+                    {% endfor %}.
+                </p>
+            </div>
+            <div class="flex items-center space-x-3 mt-4">
+                <button type="submit" id="upload-button" class="btn btn-primary">
+                    Загрузить медиа
+                </button>
+                <div id="upload-spinner" class="hidden w-5 h-5 border-t-2 border-b-2 
+                     border-indigo-200 rounded-full animate-spin">
+                </div>
+            </div>
+        </form>
+
+        <form id="delete-media-form" action="{{ url_for('config_bp.delete_media') }}" method="POST">
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="text-lg font-medium text-gray-300">Управление загруженными медиафайлами</h3>
+                <div class="flex items-center space-x-2">
+                    <div id="selection-controls" class="hidden">
+                        <button type="button" id="select-all" class="btn btn-secondary btn-sm mr-2">
+                            Выбрать все
+                        </button>
+                        <button type="button" id="select-none" class="btn btn-secondary btn-sm mr-4">
+                            Снять выделение
+                        </button>
+                    </div>
+                    <button type="submit" id="delete-button" class="btn btn-danger btn-sm" disabled>
+                        Удалить выбранные (<span id="selected-count">0</span>)
+                    </button>
+                </div>
+            </div>
+            <p class="text-sm text-gray-400 mb-4">
+                Выберите медиа для удаления. Нажмите на элемент, чтобы выбрать/отменить выбор.
+            </p>
+            {% if media_files %}
+            <div id="media-grid"
+                class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4 mb-4">
+                {% for media in media_files %}
+                <div class="thumbnail-item relative" data-media-type="{{ media.media_type }}">
+                    <input type="checkbox" name="selected_media" value="{{ media.id }}" id="media-{{ media.id }}"
+                        class="media-checkbox sr-only">
+                    <label for="media-{{ media.id }}" class="block cursor-pointer">
+                        {# *** UPDATED THUMBNAIL DISPLAY LOGIC *** #}
+                        <img src="{{ url_for('main_bp.serve_thumbnail', filename=media.get_thumbnail_filename()) }}"
+                            alt="{{ media.display_name }} thumbnail" loading="lazy"
+                            class="w-full h-[100px] object-cover block bg-gray-700" {# Added bg-gray-700 as fallback #}
+                            onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        {# Fallback SVG Icon (initially hidden, shown by onerror) #}
+                        <div class="w-full h-[100px] bg-gray-600 items-center justify-center relative"
+                            style="display: none;">
+                            {% if media.media_type == 'image' %}
+                            <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z">
+                                </path>
+                            </svg>
+                            {% else %} {# Video Icon #}
+                            <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z">
+                                </path>
+                            </svg>
+                            {% endif %}
+                        </div>
+                        <div class="filename" title="{{ media.display_name }} ({{ media.original_filename }})">
+                            {% if media.media_type == 'video' %}
+                            <svg class="inline-block w-3 h-3 mr-1 text-gray-300" fill="currentColor" viewBox="0 0 20 20"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path fill-rule="evenodd"
+                                    d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm3 2h6v4H7V5zm8 8H5v-2h10v2z"
+                                    clip-rule="evenodd"></path>
+                            </svg>
+                            {% elif media.media_type == 'image' %}
+                            <svg class="inline-block w-3 h-3 mr-1 text-gray-300" fill="currentColor" viewBox="0 0 20 20"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path fill-rule="evenodd"
+                                    d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm13.586 3.586a2 2 0 00-2.828 0L11 10.172V13h2.828l3.758-3.758a2 2 0 000-2.828zM5 7a2 2 0 114 0 2 2 0 01-4 0z"
+                                    clip-rule="evenodd"></path>
+                            </svg>
+                            {% endif %}
+                            {{ media.display_name }}
+                        </div>
+                    </label>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-gray-500">Действительные медиа еще не загружены.</p>
+            {% endif %}
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block page_js %}
+<script src="{{ url_for('static', filename='js/media_management.js') }}"></script>
+{% endblock %}
